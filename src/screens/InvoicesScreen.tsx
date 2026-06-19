@@ -13,21 +13,21 @@ import './InvoicesScreen.css';
 
 export function InvoicesScreen() {
   const navigate = useNavigate();
-  const { token, whmcsUrl } = useAuthStore();
+  const { token } = useAuthStore();  // ✅ Solo token
   const [filterStatus, setFilterStatus] = useState('Todos');
   const [selectedNav, setSelectedNav] = useState('invoices');
 
   const api = React.useMemo(() => {
-    if (!token || !whmcsUrl) {
-      navigate('/login');
+    if (!token) {  // ✅ Solo validar token
       return null;
     }
     return initializeWhmcsApi({
       token: token,
     });
-  }, [token, whmcsUrl, navigate]);
+  }, [token]);
 
-  const invoicesQuery = useInvoices(api!, { limit: 200 });
+  // ✅ Sin forzar null
+  const invoicesQuery = useInvoices(api, { limit: 200 });
 
   const filteredInvoices = React.useMemo(() => {
     if (!invoicesQuery.data) return [];
@@ -62,6 +62,7 @@ export function InvoicesScreen() {
     navigate('/login');
   };
 
+  // ✅ Si no hay api, mostrar loading
   if (!api) {
     return <Loading message="Iniciando..." />;
   }
