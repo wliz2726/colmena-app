@@ -24,7 +24,6 @@ export function InvoicesScreen() {
     }
     return initializeWhmcsApi({
       token: token,
-      baseUrl: whmcsUrl,
     });
   }, [token, whmcsUrl, navigate]);
 

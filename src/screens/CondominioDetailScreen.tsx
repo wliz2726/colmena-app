@@ -26,7 +26,6 @@ export function CondominioDetailScreen() {
     }
     return initializeWhmcsApi({
       token: token,
-      baseUrl: whmcsUrl,
     });
   }, [token, whmcsUrl, navigate]);
 
