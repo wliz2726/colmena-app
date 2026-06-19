@@ -1,45 +1,25 @@
 {
   "name": "Colmena - Gestión de Condominios",
-  // ↑ Nombre completo cuando instala la app
-  
   "short_name": "Colmena",
-  // ↑ Nombre corto en el icono (máx 12 caracteres)
-  
   "description": "Plataforma de gestión de condominios con WHMCS integrado",
-  // ↑ Descripción en la tienda de apps
-  
   "start_url": "/",
-  // ↑ Página que abre cuando taps en el icono
-  
   "scope": "/",
-  // ↑ Ruta dentro de la app
-  
   "display": "standalone",
-  // ↑ Se abre como app nativa (sin barra de Safari)
-  
   "orientation": "portrait-primary",
-  // ↑ Solo modo vertical (para iPhone)
-  
   "theme_color": "#02152F",
-  // ↑ Color de la barra (azul oscuro de Colmena)
-  
   "background_color": "#FFFFFF",
-  // ↑ Color de fondo al instalar
-  
   "icons": [
     {
-      "src": "/logo-icon.png",
-      // ↑ Ruta del icono
-      
+      "src": "/logo-192.png",
       "sizes": "192x192",
-      // ↑ Tamaño para Android
-      
       "type": "image/png",
-      // ↑ Formato de imagen
-      
       "purpose": "any"
-      // ↑ Propósito (cualquier dispositivo)
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
-  // ↑ Array de iconos en diferentes tamaños
 }
