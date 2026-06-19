@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../stores';
-import { useTickets, useDepartments, useTicketCounts } from '../hooks';
+import { useTickets, useTicketCounts } from '../hooks';
 import { initializeWhmcsApi } from '../whmcsApi';
 import { Header } from '../components/Header';
 import { Card } from '../components/Card';
@@ -32,8 +32,13 @@ export function TicketsScreen() {
     return initializeWhmcsApi({ token });
   }, [navigate]);
 
-  // Traer departamentos (condominios)
-  const departmentsQuery = useDepartments(api);
+  // TODO: Implementar GetDepartments en WHMCS
+  // Por ahora, sin selector de departamentos
+  const departmentsQuery = { 
+    data: [], 
+    isPending: false, 
+    isError: false 
+  };
 
   // Traer tickets del departamento seleccionado (o todos si no hay seleccionado)
   const ticketsQuery = useTickets(api, {
@@ -166,7 +171,7 @@ export function TicketsScreen() {
       <div className="screen-content">
         <div className="screen-inner">
           {/* SELECTOR DE DEPARTAMENTOS */}
-          {departments.length > 0 && (
+          {/*departments.length > 0 && (
             <div className="department-selector">
               <button
                 className={`dept-btn ${selectedDepartment === undefined ? 'active' : ''}`}
@@ -184,7 +189,7 @@ export function TicketsScreen() {
                 </button>
               ))}
             </div>
-          )}
+          )*/}
 
           {/* CONTEOS */}
           {countsQuery.data && (
