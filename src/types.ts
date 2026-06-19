@@ -226,3 +226,57 @@ export interface AppState {
   loading: boolean;
   error: string | null;
 }
+
+// ============================================================================
+// TIPOS PARA TICKETS - Agregar esto a tu types.ts
+// ============================================================================
+
+export interface Ticket {
+  id: string;
+  tid: string;  // Ticket ID visible (ej: #123456)
+  did: string;  // Department ID
+  deptname: string;  // Department name
+  userid: string;
+  title: string;
+  status: 'Open' | 'Answered' | 'Customer-Reply' | 'On Hold' | 'In Progress' | 'Closed';
+  priority: 'Low' | 'Medium' | 'High' | 'Urgent';
+  name: string;  // Cliente/Condómino
+  email: string;
+  datecreated: string;  // Fecha creación (YYYY-MM-DD HH:MM:SS)
+  lastreply: string;  // Última respuesta (YYYY-MM-DD HH:MM:SS o 0000-00-00)
+  total: string;  // Cantidad de notas
+}
+
+export interface TicketDetail extends Ticket {
+  department: string;
+  subject: string;
+  notes?: TicketNote[];
+}
+
+export interface TicketNote {
+  id: string;
+  ticketid: string;
+  userid: string;
+  name: string;
+  email: string;
+  message: string;
+  datecreated: string;
+  attachment?: {
+    id: string;
+    filename: string;
+    type: string;
+  }[];
+}
+
+export interface Department {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface TicketCounts {
+  open: number;
+  answered: number;
+  onhold: number;
+  closed: number;
+}

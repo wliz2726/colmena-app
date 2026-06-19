@@ -260,6 +260,7 @@ export function CondominiosScreen() {
           if (nav === 'dashboard') navigate('/dashboard');
           else if (nav === 'condominios') navigate('/condominios');
           else if (nav === 'invoices') navigate('/invoices');
+          else if (nav === 'tickets') navigate('/tickets');
         }}
       />
     </div>

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import axios, { AxiosInstance } from 'axios';
 import { useAuthStore } from '../stores';
 import { useTicketDetail, useTicketNotes } from '../hooks';
@@ -13,16 +13,21 @@ import './TicketDetailScreen.css';
 
 export function TicketDetailScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { ticketid } = useParams<{ ticketid: string }>();
   const { token } = useAuthStore();
   const [selectedNav, setSelectedNav] = useState('tickets');
+
+  // Sincronizar selectedNav con la ruta actual
+  useEffect(() => {
+    setSelectedNav('tickets');
+  }, [location.pathname]);
 
   const api = React.useMemo(() => {
     if (!token) {
       return null;
     }
     return axios.create({
-      baseURL: '/api/proxy',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
