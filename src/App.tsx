@@ -79,7 +79,7 @@ function AppContent() {
         }
       />
       <Route
-        path="/condominio/:clientid"
+        path="/condominios/:clientid"
         element={
           <ProtectedRoute>
             <CondominioDetailScreen />
