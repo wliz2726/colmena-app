@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios, { AxiosInstance } from 'axios';
 import { useAuthStore } from '../stores';
 import { useTickets, useDepartments, useTicketCounts } from '../hooks';
+import { initializeWhmcsApi } from '../whmcsApi';
 import { Header } from '../components/Header';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
@@ -29,13 +29,7 @@ export function TicketsScreen() {
       navigate('/login');
       return null;
     }
-
-    // Crear axios para /api/proxy
-    return axios.create({
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    }) as AxiosInstance;
+    return initializeWhmcsApi({ token });
   }, [navigate]);
 
   // Traer departamentos (condominios)

@@ -1,6 +1,5 @@
 import { useQuery, UseQueryResult, QueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { AxiosInstance } from 'axios';
 import {
   GetClientGroupsResponse,
   GetClientsResponse,
@@ -204,29 +203,21 @@ export function useDashboardStats(api: WhmcsApi): UseQueryResult<{ totalClients:
 }
 
 // ============================================================================
-// HOOKS PARA TICKETS (CON gcTime AGREGADO)
+// HOOKS PARA TICKETS (AHORA CON WhmcsApi - CONSISTENTE)
 // ============================================================================
 
 /**
  * Hook para obtener DEPARTAMENTOS (condominios)
  * Cada condominio = 1 departamento
  */
-export function useDepartments(api: AxiosInstance | null) {
+export function useDepartments(api: WhmcsApi | null) {
   return useQuery({
     queryKey: QUERY_KEYS.departments,
     queryFn: async () => {
       if (!api) throw new Error('API no inicializado');
 
-      const response = await api.post('/api/proxy', {
-        action: 'GetDepartments',
-        params: {},
-      });
-
-      if (response.data.result === 'error') {
-        throw new Error(response.data.message || 'Error obteniendo departamentos');
-      }
-
-      const depts = response.data.departments?.department || [];
+      const response = await api.getDepartments();
+      const depts = response.departments?.department || [];
       return Array.isArray(depts) ? depts : [depts];
     },
     enabled: !!api,
@@ -240,7 +231,7 @@ export function useDepartments(api: AxiosInstance | null) {
  * Si no hay departmentid, trae todos los tickets
  */
 export function useTickets(
-  api: AxiosInstance | null,
+  api: WhmcsApi | null,
   options?: {
     departmentid?: string;
     status?: string;
@@ -252,28 +243,13 @@ export function useTickets(
     queryFn: async () => {
       if (!api) throw new Error('API no inicializado');
 
-      const params: Record<string, any> = {
+      const response = await api.getTickets({
+        departmentid: options?.departmentid,
+        status: options?.status,
         limitnum: options?.limit || 100,
-      };
-
-      if (options?.departmentid) {
-        params.departmentid = options.departmentid;
-      }
-
-      if (options?.status) {
-        params.status = options.status;
-      }
-
-      const response = await api.post('/api/proxy', {
-        action: 'GetTickets',
-        params: params,
       });
 
-      if (response.data.result === 'error') {
-        throw new Error(response.data.message || 'Error obteniendo tickets');
-      }
-
-      const tickets = response.data.tickets?.ticket || [];
+      const tickets = response.tickets?.ticket || [];
       return Array.isArray(tickets) ? tickets : [tickets];
     },
     enabled: !!api,
@@ -285,22 +261,14 @@ export function useTickets(
 /**
  * Hook para obtener DETALLE de un ticket
  */
-export function useTicketDetail(api: AxiosInstance | null, ticketid: string | undefined) {
+export function useTicketDetail(api: WhmcsApi | null, ticketid: string | undefined) {
   return useQuery({
     queryKey: QUERY_KEYS.ticketDetail(ticketid || ''),
     queryFn: async () => {
       if (!api || !ticketid) throw new Error('API o ticketid no disponible');
 
-      const response = await api.post('/api/proxy', {
-        action: 'GetTicket',
-        params: { ticketid },
-      });
-
-      if (response.data.result === 'error') {
-        throw new Error(response.data.message || 'Error obteniendo detalle del ticket');
-      }
-
-      return response.data as TicketDetail;
+      const response = await api.getTicket(ticketid);
+      return response as TicketDetail;
     },
     enabled: !!api && !!ticketid,
     staleTime: 1 * 60 * 1000,
@@ -311,22 +279,14 @@ export function useTicketDetail(api: AxiosInstance | null, ticketid: string | un
 /**
  * Hook para obtener NOTAS/CONVERSACIÓN de un ticket
  */
-export function useTicketNotes(api: AxiosInstance | null, ticketid: string | undefined) {
+export function useTicketNotes(api: WhmcsApi | null, ticketid: string | undefined) {
   return useQuery({
     queryKey: QUERY_KEYS.ticketNotes(ticketid || ''),
     queryFn: async () => {
       if (!api || !ticketid) throw new Error('API o ticketid no disponible');
 
-      const response = await api.post('/api/proxy', {
-        action: 'GetTicketNotes',
-        params: { ticketid },
-      });
-
-      if (response.data.result === 'error') {
-        throw new Error(response.data.message || 'Error obteniendo notas');
-      }
-
-      const notes = response.data.notes?.note || [];
+      const response = await api.getTicketNotes(ticketid);
+      const notes = response.notes?.note || [];
       return Array.isArray(notes) ? notes : [notes];
     },
     enabled: !!api && !!ticketid,
@@ -338,28 +298,14 @@ export function useTicketNotes(api: AxiosInstance | null, ticketid: string | und
 /**
  * Hook para obtener CONTEOS de tickets por estado
  */
-export function useTicketCounts(api: AxiosInstance | null, departmentid?: string) {
+export function useTicketCounts(api: WhmcsApi | null, departmentid?: string) {
   return useQuery({
     queryKey: QUERY_KEYS.ticketCounts(departmentid),
     queryFn: async () => {
       if (!api) throw new Error('API no inicializado');
 
-      const params: Record<string, any> = {};
-
-      if (departmentid) {
-        params.departmentid = departmentid;
-      }
-
-      const response = await api.post('/api/proxy', {
-        action: 'GetTicketCounts',
-        params: params,
-      });
-
-      if (response.data.result === 'error') {
-        throw new Error(response.data.message || 'Error obteniendo conteos');
-      }
-
-      return response.data as TicketCounts;
+      const response = await api.getTicketCounts(departmentid);
+      return response as TicketCounts;
     },
     enabled: !!api,
     staleTime: 5 * 60 * 1000,

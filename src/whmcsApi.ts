@@ -1,5 +1,5 @@
 /**
- * whmcsApi.ts - VERSIÓN SEGURA
+ * whmcsApi.ts - VERSIÓN SEGURA CON TICKETS
  * Ahora usa /api/proxy en lugar de llamar directo a WHMCS
  * Las credenciales se quedan en el backend (en el JWT)
  */
@@ -12,6 +12,11 @@ import {
   GetInvoicesResponse,
   GetInvoiceResponse,
   InvoiceStatus,
+  Ticket,
+  TicketDetail,
+  TicketNote,
+  Department,
+  TicketCounts,
 } from './types';
 
 // ============================================================================
@@ -192,6 +197,63 @@ export class WhmcsApi {
 
   async getInvoice(invoiceid: number | string): Promise<GetInvoiceResponse> {
     return this.request<GetInvoiceResponse>('GetInvoice', { invoiceid });
+  }
+
+  // ========================================================================
+  // PUBLIC METHODS - TICKETS (NUEVA FUNCIONALIDAD)
+  // ========================================================================
+
+  /**
+   * Obtener lista de departamentos (=condominios en Colmena)
+   */
+  async getDepartments(): Promise<{ departments?: { department: Department[] } }> {
+    return this.request('GetDepartments', {});
+  }
+
+  /**
+   * Obtener tickets con filtros opcionales
+   */
+  async getTickets(params?: {
+    departmentid?: string | number;
+    status?: string;
+    clientid?: string | number;
+    limitnum?: number;
+    offset?: number;
+  }): Promise<{ tickets?: { ticket: Ticket[] } }> {
+    const finalParams: Record<string, any> = {};
+    
+    if (params?.departmentid) finalParams.departmentid = params.departmentid;
+    if (params?.status) finalParams.status = params.status;
+    if (params?.clientid) finalParams.clientid = params.clientid;
+    
+    finalParams.limitnum = params?.limitnum || 100;
+    if (params?.offset) finalParams.offset = params.offset;
+
+    return this.request('GetTickets', finalParams);
+  }
+
+  /**
+   * Obtener detalle de un ticket específico
+   */
+  async getTicket(ticketid: string | number): Promise<TicketDetail> {
+    return this.request('GetTicket', { ticketid });
+  }
+
+  /**
+   * Obtener notas/comentarios de un ticket
+   */
+  async getTicketNotes(ticketid: string | number): Promise<{ notes?: { note: TicketNote[] } }> {
+    return this.request('GetTicketNotes', { ticketid });
+  }
+
+  /**
+   * Obtener conteos de tickets por estado
+   */
+  async getTicketCounts(departmentid?: string | number): Promise<TicketCounts> {
+    const params: Record<string, any> = {};
+    if (departmentid) params.departmentid = departmentid;
+    
+    return this.request('GetTicketCounts', params);
   }
 
   // ========================================================================
