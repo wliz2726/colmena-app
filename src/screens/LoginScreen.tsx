@@ -79,8 +79,17 @@ export function LoginScreen() {
       <div className="login-container">
         {/* HEADER CON LOGOS */}
         <div className="login-header">
-          <div className="login-logo">
-            <div style={{ fontSize: '64px' }}>🏢</div>
+          <div className="login-logo" style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+            <img 
+              src="/logo-main.png" 
+              alt="Colmena Logo" 
+              style={{ 
+                width: '180px', 
+                height: 'auto',
+                marginBottom: '32px',
+                marginTop: '24px'
+              }}
+            />
           </div>
           <p className="login-subtitle">Reinventando la vida comunitaria</p>
         </div>
