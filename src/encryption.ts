@@ -1,7 +1,113 @@
 /**
- * Utilidades de validación para credenciales WHMCS
- * SIN localStorage, SIN encriptación
+ * Utilidades de encriptación y validación para credenciales WHMCS
+ * Usa AES-256 para proteger credenciales guardadas en localStorage
  */
+
+// ============================================================================
+// ENCRIPTACIÓN CON AES-256
+// ============================================================================
+
+// Generar una clave derivada de una semilla fija (para la app)
+const ENCRYPTION_SEED = 'colmena_app_2026_secure_encryption_key';
+
+/**
+ * Genera una clave criptográfica a partir de una semilla usando PBKDF2
+ */
+async function deriveKey(seed: string): Promise<CryptoKey> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(seed);
+
+  // Importar semilla como clave
+  const baseKey = await crypto.subtle.importKey(
+    'raw',
+    data,
+    { name: 'PBKDF2' },
+    false,
+    ['deriveKey']
+  );
+
+  // Derivar clave AES-256 usando PBKDF2
+  return crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt: encoder.encode('colmena_salt_v1'),
+      iterations: 100000,
+      hash: 'SHA-256',
+    },
+    baseKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+/**
+ * Encripta datos usando AES-256-GCM
+ */
+export async function encryptData(data: any): Promise<string> {
+  try {
+    const encoder = new TextEncoder();
+    const plaintext = encoder.encode(JSON.stringify(data));
+
+    // Generar IV aleatorio
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+
+    // Derivar clave
+    const key = await deriveKey(ENCRYPTION_SEED);
+
+    // Encriptar
+    const ciphertext = await crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      plaintext
+    );
+
+    // Combinar IV + ciphertext y convertir a Base64
+    const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+    combined.set(iv);
+    combined.set(new Uint8Array(ciphertext), iv.length);
+
+    return btoa(String.fromCharCode(...combined));
+  } catch (error) {
+    console.error('Encryption error:', error);
+    throw new Error('Error al encriptar credenciales');
+  }
+}
+
+/**
+ * Desencripta datos usando AES-256-GCM
+ */
+export async function decryptData(encrypted: string): Promise<any> {
+  try {
+    // Convertir de Base64
+    const combined = new Uint8Array(
+      atob(encrypted)
+        .split('')
+        .map((c) => c.charCodeAt(0))
+    );
+
+    // Extraer IV y ciphertext
+    const iv = combined.slice(0, 12);
+    const ciphertext = combined.slice(12);
+
+    // Derivar clave
+    const key = await deriveKey(ENCRYPTION_SEED);
+
+    // Desencriptar
+    const plaintext = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      ciphertext
+    );
+
+    // Convertir a JSON
+    const decoder = new TextDecoder();
+    return JSON.parse(decoder.decode(plaintext));
+  } catch (error) {
+    console.error('Decryption error:', error);
+    throw new Error('Error al desencriptar credenciales');
+  }
+}
 
 // ============================================================================
 // VALIDACIÓN DE URLs

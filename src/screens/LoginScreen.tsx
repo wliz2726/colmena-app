@@ -64,8 +64,13 @@ export function LoginScreen() {
         return;
       }
 
-      // Guardar token en el store (NOT credenciales WHMCS)
-      setAuth(token, normalizedUrl);
+      // Guardar token Y credenciales encriptadas en el store
+      // Las credenciales se guardan para auto-login en futuras sesiones
+      setAuth(token, normalizedUrl, {
+        whmcsUrl: normalizedUrl,
+        identifier: identifier.trim(),
+        secret: secret.trim(),
+      });
 
       // Navegar a dashboard
       navigate('/dashboard');
@@ -175,7 +180,7 @@ export function LoginScreen() {
         {/* FOOTER */}
         <div className="login-footer">
           <p className="login-footer-text">
-            Las credenciales se validan en el servidor de forma segura.
+            Las credenciales se validan en el servidor de forma segura y se guardan encriptadas.
           </p>
         </div>
       </div>

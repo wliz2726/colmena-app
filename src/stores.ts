@@ -1,6 +1,6 @@
 /**
  * Zustand stores para Colmena App
- * Manejo de estado global - SIN localStorage
+ * Manejo de estado global con localStorage para auto-login
  */
 
 import { create } from 'zustand';
@@ -11,10 +11,17 @@ import {
   Invoice,
   CondominoDetalle,
 } from './types';
+import { encryptData, decryptData, normalizeWhmcsUrl } from './encryption';
 
 // ============================================================================
-// AUTH STORE - Credenciales en MEMORIA solamente
+// AUTH STORE - Con localStorage para credenciales encriptadas
 // ============================================================================
+
+interface SavedCredentials {
+  whmcsUrl: string;
+  identifier: string;
+  secret: string;
+}
 
 interface UseAuthStoreState {
   isAuthenticated: boolean;
@@ -22,14 +29,24 @@ interface UseAuthStoreState {
   whmcsUrl: string | null;
   error: string | null;
   loading: boolean;
+  savedCredentials: SavedCredentials | null;
 
-  setAuth: (token: string, whmcsUrl: string) => void;
+  setAuth: (token: string, whmcsUrl: string, saveCredentials?: SavedCredentials) => void;
   logout: () => void;
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
   clearError: () => void;
   getAuthHeader: () => { Authorization: string } | null;
+  
+  // Nueva: Cargar sesión guardada
+  loadFromStorage: () => Promise<void>;
+  clearStorage: () => void;
 }
+
+const STORAGE_KEYS = {
+  token: 'colmena_auth_token',
+  credentials: 'colmena_saved_credentials',
+};
 
 export const useAuthStore = create<UseAuthStoreState>()(
   immer((set, get) => ({
@@ -38,13 +55,32 @@ export const useAuthStore = create<UseAuthStoreState>()(
     whmcsUrl: null,
     error: null,
     loading: false,
+    savedCredentials: null,
 
-    setAuth: (token: string, whmcsUrl: string) =>
+    setAuth: (token: string, whmcsUrl: string, saveCredentials?: SavedCredentials) =>
       set((state) => {
         state.isAuthenticated = true;
         state.token = token;
         state.whmcsUrl = whmcsUrl;
         state.error = null;
+
+        // Guardar credenciales encriptadas si se proporcionan
+        if (saveCredentials) {
+          state.savedCredentials = saveCredentials;
+          try {
+            const encrypted = encryptData(saveCredentials);
+            localStorage.setItem(STORAGE_KEYS.credentials, encrypted);
+          } catch (err) {
+            console.error('Error saving credentials:', err);
+          }
+        }
+
+        // Guardar token
+        try {
+          localStorage.setItem(STORAGE_KEYS.token, token);
+        } catch (err) {
+          console.error('Error saving token:', err);
+        }
       }),
 
     logout: () =>
@@ -53,6 +89,11 @@ export const useAuthStore = create<UseAuthStoreState>()(
         state.token = null;
         state.whmcsUrl = null;
         state.error = null;
+        state.savedCredentials = null;
+
+        // Limpiar localStorage
+        localStorage.removeItem(STORAGE_KEYS.token);
+        localStorage.removeItem(STORAGE_KEYS.credentials);
       }),
 
     setError: (error: string | null) =>
@@ -73,6 +114,97 @@ export const useAuthStore = create<UseAuthStoreState>()(
     getAuthHeader: () => {
       const token = get().token;
       return token ? { Authorization: `Bearer ${token}` } : null;
+    },
+
+    // ========================================================================
+    // NUEVA FUNCIONALIDAD: Cargar sesión desde localStorage
+    // ========================================================================
+
+    loadFromStorage: async () => {
+      set((state) => {
+        state.loading = true;
+      });
+
+      try {
+        // Primero intentar cargar JWT
+        const savedToken = localStorage.getItem(STORAGE_KEYS.token);
+        if (savedToken) {
+          set((state) => {
+            state.token = savedToken;
+            state.isAuthenticated = true;
+            state.loading = false;
+          });
+          return;
+        }
+
+        // Si no hay JWT, intentar auto-login con credenciales guardadas
+        const encryptedCreds = localStorage.getItem(STORAGE_KEYS.credentials);
+        if (encryptedCreds) {
+          try {
+            const savedCreds = decryptData(encryptedCreds) as SavedCredentials;
+
+            set((state) => {
+              state.savedCredentials = savedCreds;
+              state.whmcsUrl = savedCreds.whmcsUrl;
+            });
+
+            // Hacer auto-login
+            const response = await fetch('/api/auth', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                whmcsUrl: normalizeWhmcsUrl(savedCreds.whmcsUrl),
+                identifier: savedCreds.identifier,
+                secret: savedCreds.secret,
+              }),
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              set((state) => {
+                state.token = data.token;
+                state.isAuthenticated = true;
+                state.whmcsUrl = savedCreds.whmcsUrl;
+                state.loading = false;
+              });
+              localStorage.setItem(STORAGE_KEYS.token, data.token);
+            } else {
+              // Si falla auto-login, limpiar credenciales guardadas
+              set((state) => {
+                state.loading = false;
+              });
+              localStorage.removeItem(STORAGE_KEYS.credentials);
+              localStorage.removeItem(STORAGE_KEYS.token);
+            }
+          } catch (decryptError) {
+            console.error('Error decrypting credentials:', decryptError);
+            set((state) => {
+              state.loading = false;
+            });
+            localStorage.removeItem(STORAGE_KEYS.credentials);
+          }
+        } else {
+          // No hay JWT ni credenciales guardadas
+          set((state) => {
+            state.loading = false;
+          });
+        }
+      } catch (error) {
+        console.error('Error loading from storage:', error);
+        set((state) => {
+          state.loading = false;
+        });
+      }
+    },
+
+    clearStorage: () => {
+      localStorage.removeItem(STORAGE_KEYS.token);
+      localStorage.removeItem(STORAGE_KEYS.credentials);
+      set((state) => {
+        state.token = null;
+        state.savedCredentials = null;
+        state.isAuthenticated = false;
+      });
     },
   }))
 );
