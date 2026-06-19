@@ -94,6 +94,10 @@ async function validateWhmcsCredentials(
     data.append('secret', secret);
     data.append('responsetype', 'json');
 
+    console.log(`[WHMCS] Validating credentials for: ${whmcsUrl}`);
+    console.log(`[WHMCS] Identifier: ${identifier}`);
+    console.log(`[WHMCS] Request body:`, data.toString());
+
     const response = await fetch(`${whmcsUrl}/includes/api.php`, {
       method: 'POST',
       headers: {
@@ -102,12 +106,18 @@ async function validateWhmcsCredentials(
       body: data.toString(),
     });
 
+    console.log(`[WHMCS] Response status: ${response.status}`);
+    
+    const text = await response.text();
+    console.log(`[WHMCS] Response body:`, text);
+
     if (!response.ok) {
       console.error(`WHMCS validation failed: ${response.status}`);
       return false;
     }
 
-    const result = await response.json();
+    const result = JSON.parse(text);
+    console.log(`[WHMCS] Result:`, result);
     return result.result === 'success';
   } catch (error) {
     console.error('WHMCS validation error:', error);
