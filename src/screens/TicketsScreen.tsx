@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import axios, { AxiosInstance } from 'axios';
 import { useAuthStore } from '../stores';
 import { useTickets, useDepartments, useTicketCounts } from '../hooks';
+import { initializeWhmcsApi } from '../whmcsApi';
 import { Header } from '../components/Header';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
@@ -14,7 +14,6 @@ import './TicketsScreen.css';
 export function TicketsScreen() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { token } = useAuthStore();
   const [filterStatus, setFilterStatus] = useState('Todos');
   const [selectedDepartment, setSelectedDepartment] = useState<string | undefined>(undefined);
   const [selectedNav, setSelectedNav] = useState('tickets');
@@ -25,28 +24,27 @@ export function TicketsScreen() {
   }, [location.pathname]);
 
   const api = React.useMemo(() => {
+    const { token } = useAuthStore.getState();
     if (!token) {
+      navigate('/login');
       return null;
     }
-    return axios.create({
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    }) as AxiosInstance;
-  }, [token]);
+    return initializeWhmcsApi({
+      token,
+    });
+  }, [navigate]);
 
   // Traer departamentos (condominios)
-  const departmentsQuery = useDepartments(api);
+  const departmentsQuery = useDepartments(api as any);
 
   // Traer tickets del departamento seleccionado (o todos si no hay seleccionado)
-  const ticketsQuery = useTickets(api, {
+  const ticketsQuery = useTickets(api as any, {
     departmentid: selectedDepartment,
     limit: 50,
   });
 
   // Traer conteos
-  const countsQuery = useTicketCounts(api, selectedDepartment);
+  const countsQuery = useTicketCounts(api as any, selectedDepartment);
 
   const filteredTickets = React.useMemo(() => {
     if (!ticketsQuery.data) return [];

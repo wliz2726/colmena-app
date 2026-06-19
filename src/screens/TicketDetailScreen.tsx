@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import axios, { AxiosInstance } from 'axios';
 import { useAuthStore } from '../stores';
 import { useTicketDetail, useTicketNotes } from '../hooks';
+import { initializeWhmcsApi } from '../whmcsApi';
 import { Header } from '../components/Header';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
@@ -15,7 +15,6 @@ export function TicketDetailScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const { ticketid } = useParams<{ ticketid: string }>();
-  const { token } = useAuthStore();
   const [selectedNav, setSelectedNav] = useState('tickets');
 
   // Sincronizar selectedNav con la ruta actual
@@ -24,19 +23,18 @@ export function TicketDetailScreen() {
   }, [location.pathname]);
 
   const api = React.useMemo(() => {
+    const { token } = useAuthStore.getState();
     if (!token) {
+      navigate('/login');
       return null;
     }
-    return axios.create({
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    }) as AxiosInstance;
-  }, [token]);
+    return initializeWhmcsApi({
+      token,
+    });
+  }, [navigate]);
 
-  const ticketQuery = useTicketDetail(api, ticketid);
-  const notesQuery = useTicketNotes(api, ticketid);
+  const ticketQuery = useTicketDetail(api as any, ticketid);
+  const notesQuery = useTicketNotes(api as any, ticketid);
 
   const handleLogout = () => {
     useAuthStore.getState().logout();
