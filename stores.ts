@@ -1,0 +1,408 @@
+/**
+ * Zustand stores para Colmena App
+ * Manejo de estado global
+ */
+
+import { create } from 'zustand';
+import { immer } from 'zustand/middleware/immer';
+import {
+  AuthState,
+  LoginCredentials,
+  Condominio,
+  Condominimos,
+  Invoice,
+  CondominoDetalle,
+} from './types';
+import {
+  storeCredentials,
+  retrieveCredentials,
+  clearCredentials,
+  StoredCredentials,
+} from './encryption';
+
+// ============================================================================
+// AUTH STORE
+// ============================================================================
+
+interface UseAuthStoreState {
+  isAuthenticated: boolean;
+  credentials: LoginCredentials | null;
+  error: string | null;
+  loading: boolean;
+
+  // Actions
+  login: (credentials: LoginCredentials) => void;
+  logout: () => void;
+  setError: (error: string | null) => void;
+  setLoading: (loading: boolean) => void;
+  restoreSession: () => void;
+  clearError: () => void;
+}
+
+export const useAuthStore = create<UseAuthStoreState>()(
+  immer((set) => ({
+    isAuthenticated: false,
+    credentials: null,
+    error: null,
+    loading: false,
+
+    login: (credentials: LoginCredentials) =>
+      set((state) => {
+        state.credentials = credentials;
+        state.isAuthenticated = true;
+        state.error = null;
+
+        // Guardar encriptado en localStorage
+        try {
+          storeCredentials(
+            credentials.whmcsUrl,
+            credentials.username,
+            credentials.password
+          );
+        } catch (err) {
+          state.error = 'Error al guardar credenciales de forma segura';
+          console.error(err);
+        }
+      }),
+
+    logout: () =>
+      set((state) => {
+        state.isAuthenticated = false;
+        state.credentials = null;
+        state.error = null;
+        clearCredentials();
+      }),
+
+    setError: (error: string | null) =>
+      set((state) => {
+        state.error = error;
+      }),
+
+    setLoading: (loading: boolean) =>
+      set((state) => {
+        state.loading = loading;
+      }),
+
+    restoreSession: () =>
+      set((state) => {
+        try {
+          const stored = retrieveCredentials();
+          if (stored) {
+            state.credentials = {
+              whmcsUrl: stored.whmcsUrl,
+              username: stored.username,
+              password: stored.password,
+            };
+            state.isAuthenticated = true;
+          }
+        } catch (err) {
+          console.error('Error restoring session:', err);
+          state.isAuthenticated = false;
+          state.credentials = null;
+        }
+      }),
+
+    clearError: () =>
+      set((state) => {
+        state.error = null;
+      }),
+  }))
+);
+
+// ============================================================================
+// CONDOMINIO STORE
+// ============================================================================
+
+interface UseCondoStoreState {
+  selectedCondominio: Condominio | null;
+  condominios: Condominio[];
+  loading: boolean;
+  error: string | null;
+
+  // Actions
+  setSelectedCondominio: (condominio: Condominio | null) => void;
+  setCondominios: (condominios: Condominio[]) => void;
+  addCondominio: (condominio: Condominio) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  clearError: () => void;
+}
+
+export const useCondoStore = create<UseCondoStoreState>()(
+  immer((set) => ({
+    selectedCondominio: null,
+    condominios: [],
+    loading: false,
+    error: null,
+
+    setSelectedCondominio: (condominio: Condominio | null) =>
+      set((state) => {
+        state.selectedCondominio = condominio;
+        if (condominio?.id) {
+          localStorage.setItem('colmena_selected_condo', String(condominio.id));
+        } else {
+          localStorage.removeItem('colmena_selected_condo');
+        }
+      }),
+
+    setCondominios: (condominios: Condominio[]) =>
+      set((state) => {
+        state.condominios = condominios;
+      }),
+
+    addCondominio: (condominio: Condominio) =>
+      set((state) => {
+        if (!state.condominios.find((c) => c.id === condominio.id)) {
+          state.condominios.push(condominio);
+        }
+      }),
+
+    setLoading: (loading: boolean) =>
+      set((state) => {
+        state.loading = loading;
+      }),
+
+    setError: (error: string | null) =>
+      set((state) => {
+        state.error = error;
+      }),
+
+    clearError: () =>
+      set((state) => {
+        state.error = null;
+      }),
+  }))
+);
+
+// ============================================================================
+// CONDOMINIOS (RESIDENTES) STORE
+// ============================================================================
+
+interface UseCondominiosStoreState {
+  condominios: Condominimos[];
+  selectedCondominios: CondominoDetalle | null;
+  loading: boolean;
+  error: string | null;
+  searchQuery: string;
+  filterStatus: string;
+
+  // Actions
+  setCondominios: (condominios: Condominimos[]) => void;
+  setSelectedCondominios: (condominios: CondominoDetalle | null) => void;
+  addCondominios: (condominios: Condominimos) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  setSearchQuery: (query: string) => void;
+  setFilterStatus: (status: string) => void;
+  clearError: () => void;
+  clear: () => void;
+
+  // Selectors
+  getFiltered: () => Condominimos[];
+}
+
+export const useCondominiosStore = create<UseCondominiosStoreState>()(
+  immer((set, get) => ({
+    condominios: [],
+    selectedCondominios: null,
+    loading: false,
+    error: null,
+    searchQuery: '',
+    filterStatus: 'Todos',
+
+    setCondominios: (condominios: Condominimos[]) =>
+      set((state) => {
+        state.condominios = condominios;
+      }),
+
+    setSelectedCondominios: (condominios: CondominoDetalle | null) =>
+      set((state) => {
+        state.selectedCondominios = condominios;
+      }),
+
+    addCondominios: (condominios: Condominimos) =>
+      set((state) => {
+        if (!state.condominios.find((c) => c.id === condominios.id)) {
+          state.condominios.push(condominios);
+        }
+      }),
+
+    setLoading: (loading: boolean) =>
+      set((state) => {
+        state.loading = loading;
+      }),
+
+    setError: (error: string | null) =>
+      set((state) => {
+        state.error = error;
+      }),
+
+    setSearchQuery: (query: string) =>
+      set((state) => {
+        state.searchQuery = query;
+      }),
+
+    setFilterStatus: (status: string) =>
+      set((state) => {
+        state.filterStatus = status;
+      }),
+
+    clearError: () =>
+      set((state) => {
+        state.error = null;
+      }),
+
+    clear: () =>
+      set((state) => {
+        state.condominios = [];
+        state.selectedCondominios = null;
+        state.searchQuery = '';
+        state.filterStatus = 'Todos';
+        state.error = null;
+      }),
+
+    getFiltered: () => {
+      const state = get();
+      let filtered = [...state.condominios];
+
+      // Filtrar por búsqueda
+      if (state.searchQuery.trim()) {
+        const query = state.searchQuery.toLowerCase();
+        filtered = filtered.filter(
+          (c) =>
+            `${c.firstname} ${c.lastname}`.toLowerCase().includes(query) ||
+            c.email.toLowerCase().includes(query)
+        );
+      }
+
+      // Filtrar por estado
+      if (state.filterStatus !== 'Todos') {
+        filtered = filtered.filter((c) => c.status === state.filterStatus);
+      }
+
+      return filtered;
+    },
+  }))
+);
+
+// ============================================================================
+// INVOICES STORE
+// ============================================================================
+
+interface UseInvoicesStoreState {
+  invoices: Invoice[];
+  selectedInvoice: Invoice | null;
+  loading: boolean;
+  error: string | null;
+  filterStatus: string;
+
+  // Actions
+  setInvoices: (invoices: Invoice[]) => void;
+  setSelectedInvoice: (invoice: Invoice | null) => void;
+  addInvoice: (invoice: Invoice) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  setFilterStatus: (status: string) => void;
+  clearError: () => void;
+  clear: () => void;
+
+  // Selectors
+  getFiltered: () => Invoice[];
+  getPendingTotal: () => number;
+}
+
+export const useInvoicesStore = create<UseInvoicesStoreState>()(
+  immer((set, get) => ({
+    invoices: [],
+    selectedInvoice: null,
+    loading: false,
+    error: null,
+    filterStatus: 'Todas',
+
+    setInvoices: (invoices: Invoice[]) =>
+      set((state) => {
+        state.invoices = invoices;
+      }),
+
+    setSelectedInvoice: (invoice: Invoice | null) =>
+      set((state) => {
+        state.selectedInvoice = invoice;
+      }),
+
+    addInvoice: (invoice: Invoice) =>
+      set((state) => {
+        if (!state.invoices.find((i) => i.id === invoice.id)) {
+          state.invoices.push(invoice);
+        }
+      }),
+
+    setLoading: (loading: boolean) =>
+      set((state) => {
+        state.loading = loading;
+      }),
+
+    setError: (error: string | null) =>
+      set((state) => {
+        state.error = error;
+      }),
+
+    setFilterStatus: (status: string) =>
+      set((state) => {
+        state.filterStatus = status;
+      }),
+
+    clearError: () =>
+      set((state) => {
+        state.error = null;
+      }),
+
+    clear: () =>
+      set((state) => {
+        state.invoices = [];
+        state.selectedInvoice = null;
+        state.filterStatus = 'Todas';
+        state.error = null;
+      }),
+
+    getFiltered: () => {
+      const state = get();
+
+      if (state.filterStatus === 'Todas') {
+        return state.invoices;
+      }
+
+      return state.invoices.filter((inv) => inv.status === state.filterStatus);
+    },
+
+    getPendingTotal: () => {
+      const state = get();
+      return state.invoices
+        .filter((inv) => inv.status === 'Unpaid' || inv.status === 'Overdue')
+        .reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0);
+    },
+  }))
+);
+
+// ============================================================================
+// COMBINED STORE (OPCIONAL)
+// ============================================================================
+
+interface UseCombinedStoreState {
+  auth: ReturnType<typeof useAuthStore.getState>;
+  condo: ReturnType<typeof useCondoStore.getState>;
+  condominios: ReturnType<typeof useCondominiosStore.getState>;
+  invoices: ReturnType<typeof useInvoicesStore.getState>;
+}
+
+/**
+ * Hook para acceder a todos los stores de una vez (si es necesario)
+ * Usar los stores individuales es preferible
+ */
+export function useCombinedStore(): UseCombinedStoreState {
+  return {
+    auth: useAuthStore.getState(),
+    condo: useCondoStore.getState(),
+    condominios: useCondominiosStore.getState(),
+    invoices: useInvoicesStore.getState(),
+  };
+}
