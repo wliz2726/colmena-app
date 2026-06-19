@@ -62,7 +62,7 @@ export function CondominiosScreen() {
     let filtered = clientsQuery.data.filter(client => {
       const fullName = `${client.firstname} ${client.lastname}`;
       const email = client.email || '';
-      const companyName = client.companyname || '';
+      const companyName = (client as any).companyname || '';
       
       const matchesSearch =
         fullName.toLowerCase().includes(search.toLowerCase()) ||

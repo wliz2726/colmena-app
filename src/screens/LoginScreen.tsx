@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import LogoMain from '../assets/logo-main.png';
-import LogoFooter from '../assets/logo-footer.png';
+// Logo como SVG Data URL
+const LogoMain = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDIwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiMwMjE1MkYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI0OCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5Db2xtZW5hPC90ZXh0Pjwvc3ZnPg==';
+const LogoFooter = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjUwIiB2aWV3Qm94PSIwIDAgMjAwIDUwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjNjY2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+V2Vic3RvcmUgRG9taW5pY2FuYTwvdGV4dD48L3N2Zz4=';
 import { useAuthStore } from '../stores';
 import { validateLoginCredentials, normalizeWhmcsUrl } from '../encryption';
 import { WhmcsApi } from '../whmcsApi';
@@ -79,7 +80,7 @@ export function LoginScreen() {
         {/* HEADER CON LOGOS */}
         <div className="login-header">
           <div className="login-logo">
-            <img src={LogoMain} alt="Colmena Logo" />
+            <div style={{ fontSize: '64px' }}>🏢</div>
           </div>
           <p className="login-subtitle">Reinventando la vida comunitaria</p>
         </div>
@@ -146,7 +147,7 @@ export function LoginScreen() {
           <Button
             type="submit"
             variant="primary"
-            size="large"
+            size="lg"
             fullWidth
             loading={loading}
           >
