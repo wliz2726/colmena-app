@@ -7,8 +7,15 @@ interface IconProps {
 export function BuildingIcon({ size = 24, color = 'currentColor' }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2">
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+      <rect x="3" y="2" width="18" height="20" rx="2"></rect>
+      <line x1="9" y1="2" x2="9" y2="22"></line>
+      <line x1="15" y1="2" x2="15" y2="22"></line>
+      <line x1="3" y1="7" x2="21" y2="7"></line>
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="17" x2="21" y2="17"></line>
+      <rect x="5" y="4" width="2" height="2"></rect>
+      <rect x="11" y="4" width="2" height="2"></rect>
+      <rect x="17" y="4" width="2" height="2"></rect>
     </svg>
   );
 }

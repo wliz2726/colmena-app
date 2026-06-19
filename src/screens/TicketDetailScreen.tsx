@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import axios, { AxiosInstance } from 'axios';
 import { useAuthStore } from '../stores';
 import { useTicketDetail, useTicketNotes } from '../hooks';
-import { initializeWhmcsApi } from '../whmcsApi';
 import { Header } from '../components/Header';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
@@ -28,13 +28,17 @@ export function TicketDetailScreen() {
       navigate('/login');
       return null;
     }
-    return initializeWhmcsApi({
-      token,
-    });
+
+    // Crear axios para /api/proxy
+    return axios.create({
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    }) as AxiosInstance;
   }, [navigate]);
 
-  const ticketQuery = useTicketDetail(api as any, ticketid);
-  const notesQuery = useTicketNotes(api as any, ticketid);
+  const ticketQuery = useTicketDetail(api, ticketid);
+  const notesQuery = useTicketNotes(api, ticketid);
 
   const handleLogout = () => {
     useAuthStore.getState().logout();
