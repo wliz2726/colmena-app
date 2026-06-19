@@ -54,7 +54,7 @@ export const useAuthStore = create<UseAuthStoreState>()(
     token: null,
     whmcsUrl: null,
     error: null,
-    loading: false,
+    loading: true,  // ✅ CAMBIÓ A true
     savedCredentials: null,
 
     // ========================================================================
@@ -84,6 +84,7 @@ export const useAuthStore = create<UseAuthStoreState>()(
         state.token = token;
         state.whmcsUrl = whmcsUrl;
         state.error = null;
+        state.loading = false;  // ✅ AGREGADO
 
         if (saveCredentials) {
           state.savedCredentials = saveCredentials;
