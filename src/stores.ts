@@ -6,7 +6,6 @@
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 import {
-  LoginCredentials,
   Condominio,
   Condominimos,
   Invoice,
@@ -19,35 +18,40 @@ import {
 
 interface UseAuthStoreState {
   isAuthenticated: boolean;
-  credentials: LoginCredentials | null;
+  token: string | null;
+  whmcsUrl: string | null;
   error: string | null;
   loading: boolean;
 
-  login: (credentials: LoginCredentials) => void;
+  setAuth: (token: string, whmcsUrl: string) => void;
   logout: () => void;
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
   clearError: () => void;
+  getAuthHeader: () => { Authorization: string } | null;
 }
 
 export const useAuthStore = create<UseAuthStoreState>()(
-  immer((set) => ({
+  immer((set, get) => ({
     isAuthenticated: false,
-    credentials: null,
+    token: null,
+    whmcsUrl: null,
     error: null,
     loading: false,
 
-    login: (credentials: LoginCredentials) =>
+    setAuth: (token: string, whmcsUrl: string) =>
       set((state) => {
-        state.credentials = credentials;
         state.isAuthenticated = true;
+        state.token = token;
+        state.whmcsUrl = whmcsUrl;
         state.error = null;
       }),
 
     logout: () =>
       set((state) => {
         state.isAuthenticated = false;
-        state.credentials = null;
+        state.token = null;
+        state.whmcsUrl = null;
         state.error = null;
       }),
 
@@ -65,6 +69,11 @@ export const useAuthStore = create<UseAuthStoreState>()(
       set((state) => {
         state.error = null;
       }),
+
+    getAuthHeader: () => {
+      const token = get().token;
+      return token ? { Authorization: `Bearer ${token}` } : null;
+    },
   }))
 );
 

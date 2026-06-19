@@ -7,27 +7,7 @@
 // AUTH — CORREGIDO
 // ============================================================================
 
-/**
- * Credenciales de login que el admin ingresa
- * Puede ser:
- * - Admin username + password (legacy)
- * - API identifier + secret (moderno)
- */
-export interface LoginCredentials {
-  whmcsUrl: string;
-  identifier: string;  // username admin O API identifier
-  secret: string;      // password admin O API secret
-}
 
-/**
- * Estado de autenticación
- */
-export interface AuthState {
-  isAuthenticated: boolean;
-  credentials: LoginCredentials | null;
-  error: string | null;
-  loading: boolean;
-}
 
 // ============================================================================
 // CONDOMINIOS / CLIENT GROUPS

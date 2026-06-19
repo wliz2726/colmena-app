@@ -66,7 +66,7 @@ const filterByPeriod = (invoices: any[], period: string) => {
 
 export function DashboardScreen() {
   const navigate = useNavigate();
-  const { credentials } = useAuthStore();
+  const { token } = useAuthStore();
   const [selectedNav, setSelectedNav] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [period, setPeriod] = useState('7days');
@@ -75,16 +75,15 @@ export function DashboardScreen() {
   const adminName = 'Administrador';
 
   const api = React.useMemo(() => {
-    if (!credentials) {
+    const { token } = useAuthStore.getState();
+    if (!token) {
       navigate('/login');
       return null;
     }
     return initializeWhmcsApi({
-      whmcsUrl: credentials.whmcsUrl,
-      identifier: credentials.identifier,
-      secret: credentials.secret,
+      token,
     });
-  }, [credentials, navigate]);
+  }, [navigate]);
 
   const clientsQuery = useClients(api!, undefined);
   const invoicesQuery = useInvoices(api!, { limit: 200 });

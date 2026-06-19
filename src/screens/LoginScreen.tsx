@@ -1,18 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Logo como SVG Data URL
-const LogoMain = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDIwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxMDAiIGZpbGw9IiMwMjE1MkYiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI0OCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5Db2xtZW5hPC90ZXh0Pjwvc3ZnPg==';
-const LogoFooter = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjUwIiB2aWV3Qm94PSIwIDAgMjAwIDUwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjNjY2IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+V2Vic3RvcmUgRG9taW5pY2FuYTwvdGV4dD48L3N2Zz4=';
 import { useAuthStore } from '../stores';
 import { validateLoginCredentials, normalizeWhmcsUrl } from '../encryption';
-import { WhmcsApi } from '../whmcsApi';
 import { Button } from '../components/Button';
 import { ErrorAlert } from '../components/ErrorAlert';
 import './LoginScreen.css';
 
 export function LoginScreen() {
   const navigate = useNavigate();
-  const { login, error, setError, loading, setLoading } = useAuthStore();
+  const { setAuth, error, setError, loading, setLoading } = useAuthStore();
 
   const [whmcsUrl, setWhmcsUrl] = useState('');
   const [identifier, setIdentifier] = useState('');
@@ -35,29 +31,41 @@ export function LoginScreen() {
     try {
       const normalizedUrl = normalizeWhmcsUrl(whmcsUrl);
 
-      // Intentar conectar a WHMCS
-      const api = new WhmcsApi({
-        whmcsUrl: normalizedUrl,
-        identifier: identifier.trim(),
-        secret: secret.trim(),
+      // Llamar a /api/auth en el backend
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          whmcsUrl: normalizedUrl,
+          identifier: identifier.trim(),
+          secret: secret.trim(),
+        }),
       });
 
-      // Validar credenciales
-      const isValid = await api.validateCredentials();
-      if (!isValid) {
+      if (!response.ok) {
+        const errorData = await response.json();
         setLocalError(
-          'Credenciales incorrectas o WHMCS no disponible.\nVerifica URL, usuario y contraseña.'
+          errorData.error ||
+            'Credenciales incorrectas o WHMCS no disponible.'
         );
         setLoading(false);
         return;
       }
 
-      // Guardar credenciales en MEMORIA solamente (sin encriptación)
-      login({
-        whmcsUrl: normalizedUrl,
-        identifier: identifier.trim(),
-        secret: secret.trim(),
-      });
+      // Obtener JWT token del backend
+      const data = await response.json();
+      const { token } = data;
+
+      if (!token) {
+        setLocalError('Error al obtener token de autenticación.');
+        setLoading(false);
+        return;
+      }
+
+      // Guardar token en el store (NOT credenciales WHMCS)
+      setAuth(token, normalizedUrl);
 
       // Navegar a dashboard
       navigate('/dashboard');
@@ -167,7 +175,7 @@ export function LoginScreen() {
         {/* FOOTER */}
         <div className="login-footer">
           <p className="login-footer-text">
-            Tus credenciales se guardan en la sesión del navegador.
+            Las credenciales se validan en el servidor de forma segura.
           </p>
         </div>
       </div>

@@ -1,7 +1,7 @@
-// src/whmcsApi.ts - ORIGINAL
 /**
- * Servicio WHMCS API
- * Wrapper alrededor del endpoint /includes/api.php
+ * whmcsApi.ts - VERSIÓN SEGURA
+ * Ahora usa /api/proxy en lugar de llamar directo a WHMCS
+ * Las credenciales se quedan en el backend (en el JWT)
  */
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
@@ -19,9 +19,8 @@ import {
 // ============================================================================
 
 export interface WhmcsApiConfig {
-  whmcsUrl: string;
-  identifier: string;
-  secret: string;
+  token: string;
+  baseUrl?: string;
 }
 
 export interface WhmcsApiError {
@@ -37,16 +36,19 @@ export interface WhmcsApiError {
 
 export class WhmcsApi {
   private axiosInstance: AxiosInstance;
-  private config: WhmcsApiConfig;
+  private token: string;
+  private baseUrl: string;
 
   constructor(config: WhmcsApiConfig) {
-    this.config = config;
+    this.token = config.token;
+    this.baseUrl = config.baseUrl || '';
 
     this.axiosInstance = axios.create({
-      baseURL: config.whmcsUrl,
+      baseURL: this.baseUrl,
       timeout: 30000,
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.token}`,
       },
     });
 
@@ -54,7 +56,7 @@ export class WhmcsApi {
     this.axiosInstance.interceptors.response.use(
       (response) => response,
       (error) => {
-        console.error('WHMCS API Error:', error);
+        console.error('WHMCS Proxy Error:', error);
         throw this.handleError(error);
       }
     );
@@ -69,24 +71,10 @@ export class WhmcsApi {
     params: Record<string, any> = {}
   ): Promise<T> {
     try {
-      const data = new URLSearchParams();
-      data.append('action', action);
-      data.append('identifier', this.config.identifier);
-      data.append('secret', this.config.secret);
-      data.append('accesskey', 'SG.MPvfXaWkS4arrfp1k6WcXA. % . ( ) * [ ] -6__4dpT2mcgCxT5x62pjIP4eq6bbiMU_csNOcKl-1VE');
-      data.append('responsetype', 'json');
-
-      // Agregar parámetros adicionales
-      for (const [key, value] of Object.entries(params)) {
-        if (value !== undefined && value !== null) {
-          data.append(key, String(value));
-        }
-      }
-
-      const response = await this.axiosInstance.post<T>(
-        '/includes/api.php',
-        data
-      );
+      const response = await this.axiosInstance.post<T>('/api/proxy', {
+        action,
+        params,
+      });
 
       return response.data;
     } catch (error) {
@@ -97,6 +85,16 @@ export class WhmcsApi {
   private handleError(error: unknown): WhmcsApiError {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError;
+
+      // Error 401 = Token expirado
+      if (axiosError.response?.status === 401) {
+        return {
+          message: 'Sesión expirada. Por favor, ingresa de nuevo.',
+          code: 'TOKEN_EXPIRED',
+          statusCode: 401,
+          originalError: error,
+        };
+      }
 
       // Error de respuesta del servidor
       if (axiosError.response) {
@@ -115,7 +113,7 @@ export class WhmcsApi {
       // Error de conexión
       if (axiosError.code === 'ECONNABORTED' || axiosError.code === 'ENOTFOUND') {
         return {
-          message: 'No se puede conectar a WHMCS. Verifica la URL y la conexión.',
+          message: 'No se puede conectar al servidor. Verifica la conexión.',
           code: 'CONNECTION_ERROR',
           originalError: error,
         };
@@ -124,7 +122,7 @@ export class WhmcsApi {
       // Timeout
       if (axiosError.code === 'ECONNREFUSED') {
         return {
-          message: 'Conexión rechazada. Verifica que WHMCS esté disponible.',
+          message: 'Conexión rechazada. El servidor no está disponible.',
           code: 'CONNECTION_REFUSED',
           originalError: error,
         };
@@ -148,10 +146,6 @@ export class WhmcsApi {
   // PUBLIC METHODS - CLIENT GROUPS
   // ========================================================================
 
-  /**
-   * Obtiene todos los grupos de clientes (condominios)
-   * GET /api/client-groups
-   */
   async getClientGroups(): Promise<GetClientGroupsResponse> {
     return this.request<GetClientGroupsResponse>('GetClientGroups');
   }
@@ -160,13 +154,6 @@ export class WhmcsApi {
   // PUBLIC METHODS - CLIENTS (CONDÓMINOS)
   // ========================================================================
 
-  /**
-   * Obtiene lista de clientes (condóminos)
-   * Parámetros opcionales:
-   * - search: buscar por nombre/email
-   * - groupid: filtrar por grupo (condominio)
-   * - status: filtrar por estado (Active, Suspended, Inactive, Closed)
-   */
   async getClients(params?: {
     search?: string;
     groupid?: number | string;
@@ -179,10 +166,6 @@ export class WhmcsApi {
     return this.request<GetClientsResponse>('GetClients', params);
   }
 
-  /**
-   * Obtiene detalles de un cliente específico
-   * Incluye custom fields (torre, apartamento, etc.)
-   */
   async getClientsDetails(clientid: number | string): Promise<GetClientsDetailsResponse> {
     return this.request<GetClientsDetailsResponse>('GetClientsDetails', {
       clientid,
@@ -194,14 +177,6 @@ export class WhmcsApi {
   // PUBLIC METHODS - INVOICES
   // ========================================================================
 
-  /**
-   * Obtiene lista de invoices
-   * Parámetros opcionales:
-   * - userid: filtrar por cliente
-   * - status: Paid, Unpaid, Overdue, Draft, Cancelled
-   * - invoiceid: filtrar por ID de invoice
-   * - search: buscar en numero de invoice
-   */
   async getInvoices(params?: {
     userid?: number | string;
     status?: InvoiceStatus;
@@ -215,10 +190,6 @@ export class WhmcsApi {
     return this.request<GetInvoicesResponse>('GetInvoices', params);
   }
 
-  /**
-   * Obtiene detalles completos de una invoice
-   * Incluye items y transacciones
-   */
   async getInvoice(invoiceid: number | string): Promise<GetInvoiceResponse> {
     return this.request<GetInvoiceResponse>('GetInvoice', { invoiceid });
   }
@@ -227,24 +198,16 @@ export class WhmcsApi {
   // PUBLIC METHODS - UTILITY
   // ========================================================================
 
-  /**
-   * Valida que las credenciales sean correctas
-   * Intenta obtener grupos de clientes
-   */
   async validateCredentials(): Promise<boolean> {
     try {
-      const response = await this.getClientGroups();
-      return response.result === 'success';
+      await this.getClientGroups();
+      return true;
     } catch (error) {
       console.error('Credential validation failed:', error);
       return false;
     }
   }
 
-  /**
-   * Obtiene estadísticas generales
-   * (total clientes, invoices pendientes, etc.)
-   */
   async getDashboardStats(): Promise<{
     totalClients: number;
     totalInvoices: number;
@@ -252,7 +215,6 @@ export class WhmcsApi {
     totalPaid: number;
   }> {
     try {
-      // Obtener todos los invoices para estadísticas
       const allInvoices = await this.getInvoices({
         limit: 100,
       });
@@ -273,7 +235,6 @@ export class WhmcsApi {
         0
       );
 
-      // Obtener todos los clientes
       const allClients = await this.getClients({ limit: 1000 });
 
       return {
@@ -293,9 +254,6 @@ export class WhmcsApi {
     }
   }
 
-  /**
-   * Busca clientes en un condominio específico
-   */
   async searchCondominios(
     groupid: number | string,
     query?: string
@@ -307,9 +265,6 @@ export class WhmcsApi {
     });
   }
 
-  /**
-   * Obtiene invoices de un cliente específico con filtros
-   */
   async getClientInvoices(
     userid: number | string,
     status?: InvoiceStatus
@@ -326,16 +281,10 @@ export class WhmcsApi {
 // FACTORY
 // ============================================================================
 
-/**
- * Factory para crear instancia de WhmcsApi
- */
 export function createWhmcsApi(config: WhmcsApiConfig): WhmcsApi {
   return new WhmcsApi(config);
 }
 
-/**
- * Singleton instance (opcional)
- */
 let instance: WhmcsApi | null = null;
 
 export function initializeWhmcsApi(config: WhmcsApiConfig): WhmcsApi {

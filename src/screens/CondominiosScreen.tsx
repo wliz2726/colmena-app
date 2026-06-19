@@ -13,22 +13,21 @@ import './CondominiosScreen.css';
 
 export function CondominiosScreen() {
   const navigate = useNavigate();
-  const { credentials } = useAuthStore();
+  const { token } = useAuthStore();
   const [search, setSearch] = useState('');
   const [filterPayment, setFilterPayment] = useState('Todos');
   const [selectedNav, setSelectedNav] = useState('condominios');
 
   const api = React.useMemo(() => {
-    if (!credentials) {
+    const { token } = useAuthStore.getState();
+    if (!token) {
       navigate('/login');
       return null;
     }
     return initializeWhmcsApi({
-      whmcsUrl: credentials.whmcsUrl,
-      identifier: credentials.identifier,
-      secret: credentials.secret,
+      token,
     });
-  }, [credentials, navigate]);
+  }, [navigate]);
 
   const clientsQuery = useClients(api!, undefined);
   const invoicesQuery = useInvoices(api!, { limit: 500 });

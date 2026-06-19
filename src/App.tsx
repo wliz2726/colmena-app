@@ -16,8 +16,8 @@ import { CondominioDetailScreen } from './screens/CondominioDetailScreen';
 import { InvoicesScreen } from './screens/InvoicesScreen';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { credentials } = useAuthStore();
-  return credentials ? <>{children}</> : <Navigate to="/login" />;
+  const { token } = useAuthStore();
+  return token ? <>{children}</> : <Navigate to="/login" />;
 }
 
 function App() {
