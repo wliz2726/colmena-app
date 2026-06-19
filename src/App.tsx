@@ -35,9 +35,12 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const { loadFromStorage, loading } = useAuthStore();
 
-  // Cargar sesión al montar la app
+  // Cargar sesión al montar la app - ESPERAR A QUE SE COMPLETE
   useEffect(() => {
-    loadFromStorage();
+    const init = async () => {
+      await loadFromStorage();  // ✅ Esperar a que termine
+    };
+    init();
   }, [loadFromStorage]);
 
   // Mostrar loading global mientras se restaura sesión
