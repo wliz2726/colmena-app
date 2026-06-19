@@ -1,8 +1,7 @@
-import { useState } from 'react';
-
 interface IconProps {
   size?: number;
   color?: string;
+  className?: string;
 }
 
 export function BuildingIcon({ size = 24, color = 'currentColor' }: IconProps) {
@@ -177,17 +176,9 @@ export function BellIconWithBadge({ size = 24, color = 'currentColor' }: IconPro
   );
 }
 
-// AGREGAR ESTO A TU components/Icons.tsx
-
 // ============================================================================
-// TICKET ICON - Agregar esta función
+// TICKET ICON - Para el módulo de Tickets
 // ============================================================================
-
-interface IconProps {
-  size?: number;
-  color?: string;
-  className?: string;
-}
 
 export function TicketIcon({ size = 24, color = 'currentColor', className }: IconProps) {
   return (
@@ -213,90 +204,8 @@ export function TicketIcon({ size = 24, color = 'currentColor', className }: Ico
 }
 
 // ============================================================================
-// ALTERNATIVE: Si prefieres otro estilo
+// ATTACHMENT ICON - Para el detalle de Tickets
 // ============================================================================
-
-// Opción 2: Icono más simple (chat/soporte)
-export function TicketIconAlt({ size = 24, color = 'currentColor', className }: IconProps) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      <circle cx="9" cy="10" r="1" />
-      <circle cx="12" cy="10" r="1" />
-      <circle cx="15" cy="10" r="1" />
-    </svg>
-  );
-}
-
-// ============================================================================
-// ATTACHMENT ICON - También necesitarás esto para el detalle
-// ============================================================================
-
-export function AttachmentIcon({ size = 24, color = 'currentColor', className }: IconProps) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 2.2" />
-    </svg>
-  );
-}
-
-// ============================================================================
-// USA ESTOS ICONOS EN TUS COMPONENTES
-// ============================================================================
-
-// En TicketsScreen.tsx:
-// import { TicketIcon } from '../components/Icons';
-
-// En TicketDetailScreen.tsx:
-// import { AttachmentIcon } from '../components/Icons';
-
-// En BottomNav.tsx:
-// import { TicketIcon } from './Icons';
-
-export function TicketIcon({ size = 24, color = 'currentColor', className }: IconProps) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M2 9a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v.293a1 1 0 0 1-.293.707L12 21.414l-9.707-9.707A1 1 0 0 1 2 11.293V9z" />
-      <line x1="2" y1="9" x2="22" y2="9" />
-      <circle cx="6" cy="5" r="1" />
-      <circle cx="12" cy="5" r="1" />
-      <circle cx="18" cy="5" r="1" />
-    </svg>
-  );
-}
 
 export function AttachmentIcon({ size = 24, color = 'currentColor', className }: IconProps) {
   return (
