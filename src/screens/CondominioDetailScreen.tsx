@@ -1,50 +1,61 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores';
-import { useClientDetails, useClientInvoices } from '../hooks';
+import { useInvoices } from '../hooks';
 import { initializeWhmcsApi } from '../whmcsApi';
 import { Header } from '../components/Header';
 import { Card } from '../components/Card';
-import { Avatar } from '../components/Avatar';
 import { Badge } from '../components/Badge';
 import { BottomNav } from '../components/BottomNav';
 import { Loading } from '../components/Loading';
-import { MailIcon, MapPinIcon } from '../components/Icons';
-import './CondominioDetailScreen.css';
+import { InvoiceIcon } from '../components/Icons';
+import './InvoicesScreen.css';
 
-export function CondominioDetailScreen() {
+export function InvoicesScreen() {
   const navigate = useNavigate();
-  const { clientid } = useParams<{ clientid: string }>();
-  const { token, whmcsUrl } = useAuthStore();
-  const [invoiceFilter, setInvoiceFilter] = useState('Todos');
-  const [selectedNav, setSelectedNav] = useState('condominios');
+  const { token } = useAuthStore();
+  const [filterStatus, setFilterStatus] = useState('Todos');
+  const [selectedNav, setSelectedNav] = useState('invoices');
 
   const api = React.useMemo(() => {
-    if (!token || !whmcsUrl) {
+    if (!token) {
       navigate('/login');
       return null;
     }
     return initializeWhmcsApi({
       token: token,
     });
-  }, [token, whmcsUrl, navigate]);
+  }, [token, navigate]);
 
-  const detailsQuery = useClientDetails(api!, clientid);
-  const invoicesQuery = useClientInvoices(api!, clientid);
+  const invoicesQuery = useInvoices(api!, { limit: 200 });
 
   const filteredInvoices = React.useMemo(() => {
     if (!invoicesQuery.data) return [];
     
     let filtered = [...invoicesQuery.data];
 
-    if (invoiceFilter !== 'Todos') {
-      filtered = filtered.filter((inv) => inv.status === invoiceFilter);
+    if (filterStatus !== 'Todos') {
+      filtered = filtered.filter((inv) => inv.status === filterStatus);
     }
 
     return filtered.sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     );
-  }, [invoicesQuery.data, invoiceFilter]);
+  }, [invoicesQuery.data, filterStatus]);
+
+  const totals = React.useMemo(() => {
+    const totalAmount = filteredInvoices.reduce((sum, inv) => 
+      sum + parseFloat(inv.total || '0'), 0
+    );
+    const paidAmount = filteredInvoices
+      .filter(inv => inv.status === 'Paid')
+      .reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0);
+    const pendingAmount = filteredInvoices
+      .filter(inv => inv.status === 'Unpaid' || inv.status === 'Overdue')
+      .reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0);
+
+    return { totalAmount, paidAmount, pendingAmount };
+  }, [filteredInvoices]);
 
   const handleLogout = () => {
     useAuthStore.getState().logout();
@@ -55,70 +66,36 @@ export function CondominioDetailScreen() {
     return <Loading message="Iniciando..." />;
   }
 
-  if (!clientid) {
+  if (invoicesQuery.isPending) {
     return (
       <div className="screen">
         <Header 
-          title="Detalle Condómino" 
-          onBack={() => navigate('/condominios')}
-          onAction={handleLogout}
-          actionLabel="Salir"
-        />
-        <div className="screen-content screen-inner">
-          <p>Error: No se especificó condómino</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (detailsQuery.isPending || invoicesQuery.isPending) {
-    return (
-      <div className="screen">
-        <Header 
-          title="Detalle Condómino" 
-          onBack={() => navigate('/condominios')}
+          title="Facturas" 
+          onBack={() => navigate('/dashboard')}
           onAction={handleLogout}
           actionLabel="Salir"
         />
         <div className="screen-content">
-          <Loading message="Cargando detalles..." />
+          <Loading message="Cargando facturas..." />
         </div>
       </div>
     );
   }
 
-  if (detailsQuery.isError) {
+  if (invoicesQuery.isError) {
     return (
       <div className="screen">
         <Header 
-          title="Detalle Condómino" 
-          onBack={() => navigate('/condominios')}
+          title="Facturas" 
+          onBack={() => navigate('/dashboard')}
           onAction={handleLogout}
           actionLabel="Salir"
         />
         <div className="screen-content screen-inner">
           <div className="error-message">
-            <p>Error cargando detalles</p>
-            <p className="text-secondary">{detailsQuery.error?.message}</p>
+            <p>Error cargando facturas</p>
+            <p className="text-secondary">{invoicesQuery.error?.message}</p>
           </div>
-        </div>
-      </div>
-    );
-  }
-
-  const cliente = detailsQuery.data;
-
-  if (!cliente) {
-    return (
-      <div className="screen">
-        <Header 
-          title="Detalle Condómino" 
-          onBack={() => navigate('/condominios')}
-          onAction={handleLogout}
-          actionLabel="Salir"
-        />
-        <div className="screen-content screen-inner">
-          <p>No se encontró el condómino (ID: {clientid})</p>
         </div>
       </div>
     );
@@ -127,75 +104,37 @@ export function CondominioDetailScreen() {
   return (
     <div className="screen">
       <Header 
-        title="Detalle Condómino" 
-        onBack={() => navigate('/condominios')}
+        title="Facturas" 
+        onBack={() => navigate('/dashboard')}
         onAction={handleLogout}
         actionLabel="Salir"
       />
 
       <div className="screen-content">
         <div className="screen-inner">
-          <Card className="detail-profile">
-            <div className="profile-header">
-              <Avatar 
-                name={`${cliente.firstname} ${cliente.lastname}`}
-                size="lg"
-              />
-              <div className="profile-info">
-                <h2 className="profile-name">
-                  {cliente.firstname} {cliente.lastname}
-                </h2>
-                <Badge variant={cliente.status === 'Active' ? 'success' : 'warning'}>
-                  {cliente.status}
-                </Badge>
+          <Card className="invoices-summary">
+            <div className="summary-row">
+              <div className="summary-item">
+                <span className="summary-label">Total</span>
+                <span className="summary-value">${totals.totalAmount.toFixed(2)}</span>
               </div>
-            </div>
-
-            <div className="profile-details">
-              <div className="detail-row">
-                <div className="detail-icon">
-                  <MailIcon size={20} />
-                </div>
-                <div>
-                  <div className="detail-label">Email</div>
-                  <div className="detail-value">{cliente.email}</div>
-                </div>
+              <div className="summary-item">
+                <span className="summary-label">Pagado</span>
+                <span className="summary-value success">${totals.paidAmount.toFixed(2)}</span>
               </div>
-
-              {cliente.address1 && (
-                <div className="detail-row">
-                  <div className="detail-icon">
-                    <MapPinIcon size={20} />
-                  </div>
-                  <div>
-                    <div className="detail-label">Dirección</div>
-                    <div className="detail-value">{cliente.address1}</div>
-                  </div>
-                </div>
-              )}
-
-              {cliente.city && (
-                <div className="detail-row">
-                  <div className="detail-label">Ciudad</div>
-                  <div className="detail-value">{cliente.city}</div>
-                </div>
-              )}
-
-              <div className="detail-row">
-                <div className="detail-label">Crédito disponible</div>
-                <div className="detail-value">${parseFloat(cliente.credit || '0').toFixed(2)}</div>
+              <div className="summary-item">
+                <span className="summary-label">Pendiente</span>
+                <span className="summary-value warning">${totals.pendingAmount.toFixed(2)}</span>
               </div>
             </div>
           </Card>
-
-          <h3 className="section-title">Facturas</h3>
 
           <div className="invoices-filters">
             {['Todos', 'Paid', 'Unpaid', 'Overdue'].map((status) => (
               <button
                 key={status}
-                onClick={() => setInvoiceFilter(status)}
-                className={`filter-btn ${invoiceFilter === status ? 'active' : ''}`}
+                onClick={() => setFilterStatus(status)}
+                className={`filter-btn ${filterStatus === status ? 'active' : ''}`}
               >
                 {status}
               </button>
@@ -205,34 +144,44 @@ export function CondominioDetailScreen() {
           <div className="invoices-list">
             {filteredInvoices.length === 0 ? (
               <div className="empty-state">
+                <InvoiceIcon size={48} color="#D1D5DB" />
                 <p>No hay facturas para mostrar</p>
               </div>
             ) : (
               filteredInvoices.map((invoice) => (
-                <Card key={invoice.id} className="invoice-card">
-                  <div className="invoice-header">
-                    <div>
-                      <h4 className="invoice-num">{invoice.invoicenum}</h4>
-                      <p className="invoice-date">
-                        {new Date(invoice.date).toLocaleDateString('es-ES')}
+                <Card key={invoice.id} className="invoice-item">
+                  <div className="invoice-content">
+                    <div className="invoice-left">
+                      <h4 className="invoice-number">{invoice.invoicenum}</h4>
+                      <p className="invoice-client">
+                        {invoice.firstname || ''} {invoice.lastname || ''}
                       </p>
+                      <p className="invoice-date">
+                        Fecha: {new Date(invoice.date).toLocaleDateString('es-ES')}
+                      </p>
+                      {invoice.duedate && invoice.duedate !== '0000-00-00' && (
+                        <p className="invoice-duedate">
+                          Vencimiento: {new Date(invoice.duedate).toLocaleDateString('es-ES')}
+                        </p>
+                      )}
+                      {invoice.notes && (
+                        <p className="invoice-notes">{invoice.notes}</p>
+                      )}
                     </div>
-                    <div className="invoice-amount">
-                      <span className="amount">${parseFloat(invoice.total || '0').toFixed(2)}</span>
+                    <div className="invoice-right">
+                      <span className="invoice-total">
+                        ${parseFloat(invoice.total || '0').toFixed(2)}
+                      </span>
                       <Badge 
                         variant={
                           invoice.status === 'Paid' ? 'success' :
                           invoice.status === 'Overdue' ? 'danger' : 'warning'
                         }
-                        size="sm"
                       >
                         {invoice.status}
                       </Badge>
                     </div>
                   </div>
-                  {invoice.notes && (
-                    <p className="invoice-description">{invoice.notes}</p>
-                  )}
                 </Card>
               ))
             )}
