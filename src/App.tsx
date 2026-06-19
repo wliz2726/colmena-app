@@ -14,6 +14,8 @@ import { DashboardScreen } from './screens/DashboardScreen';
 import { CondominiosScreen } from './screens/CondominiosScreen';
 import { CondominioDetailScreen } from './screens/CondominioDetailScreen';
 import { InvoicesScreen } from './screens/InvoicesScreen';
+import { TicketsScreen } from './screens/TicketsScreen';
+import { TicketDetailScreen } from './screens/TicketDetailScreen';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuthStore();
@@ -77,7 +79,7 @@ function AppContent() {
         }
       />
       <Route
-        path="/condominios/:clientid"
+        path="/condominio/:clientid"
         element={
           <ProtectedRoute>
             <CondominioDetailScreen />
@@ -89,6 +91,24 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <InvoicesScreen />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* TICKETS - NEW */}
+      <Route
+        path="/tickets"
+        element={
+          <ProtectedRoute>
+            <TicketsScreen />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ticket/:ticketid"
+        element={
+          <ProtectedRoute>
+            <TicketDetailScreen />
           </ProtectedRoute>
         }
       />

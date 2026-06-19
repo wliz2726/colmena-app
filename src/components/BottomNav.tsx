@@ -5,6 +5,7 @@ import {
   InvoiceIcon,
   DollarIcon,
   MoreIcon,
+  TicketIcon,
 } from './Icons';
 import './BottomNav.css';
 
@@ -19,6 +20,7 @@ export function BottomNav({ active, onChange, onNavigate }: BottomNavProps) {
     { id: 'dashboard', label: 'Dashboard', icon: HomeIcon },
     { id: 'condominios', label: 'Condominios', icon: BuildingIcon },
     { id: 'invoices', label: 'Facturas', icon: InvoiceIcon },
+    { id: 'tickets', label: 'Tickets', icon: TicketIcon },
     { id: 'pagos', label: 'Pagos', icon: DollarIcon },
     { id: 'mas', label: 'Más', icon: MoreIcon },
   ];
