@@ -1,0 +1,225 @@
+/* ============================================================================
+   TICKET DETAIL SCREEN STYLES
+   ============================================================================ */
+
+.ticket-header-card {
+  margin-bottom: 20px;
+}
+
+.ticket-header {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.ticket-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--primary-color, #02152F);
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+.ticket-client-info {
+  font-size: 13px;
+  color: #6B7280;
+  margin: 0;
+}
+
+/* INFO GRID */
+.ticket-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .ticket-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 11px;
+  color: #9CA3AF;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 13px;
+  color: #1F2937;
+  font-weight: 500;
+}
+
+/* SECTION TITLE */
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1F2937;
+  margin: 24px 0 12px 0;
+  padding-top: 8px;
+  border-top: 1px solid #E5E7EB;
+}
+
+/* NOTES LIST */
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.note-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E5E7EB;
+  gap: 12px;
+}
+
+.note-author {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.note-author strong {
+  font-size: 13px;
+  color: var(--primary-color, #02152F);
+  font-weight: 600;
+}
+
+.note-email {
+  font-size: 11px;
+  color: #9CA3AF;
+}
+
+.note-date {
+  font-size: 11px;
+  color: #9CA3AF;
+  white-space: nowrap;
+}
+
+.note-message {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.note-message p {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ATTACHMENTS */
+.note-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #F9FAFB;
+  border-radius: 6px;
+  border-left: 3px solid #D1D5DB;
+}
+
+.attachments-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B7280;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: #FFF;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.attachment-item:hover {
+  background: #F3F4F6;
+}
+
+.attachment-item svg {
+  color: #9CA3AF;
+  flex-shrink: 0;
+}
+
+.attachment-name {
+  font-size: 12px;
+  color: #374151;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* EMPTY NOTES */
+.empty-notes {
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.empty-notes p {
+  font-size: 13px;
+  color: #6B7280;
+  margin: 0;
+}
+
+/* PHASE 2 NOTE */
+.phase-2-note {
+  margin-top: 16px;
+  background: #FEF3C7;
+  border-left: 3px solid #FCD34D;
+  padding: 12px 14px;
+}
+
+.phase-2-note p {
+  margin: 0;
+  font-size: 12px;
+  color: #78350F;
+}
+
+/* ERROR MESSAGE */
+.error-message {
+  text-align: center;
+  padding: 30px 20px;
+}
+
+.error-message p {
+  font-size: 14px;
+  margin: 8px 0 0 0;
+}
+
+.error-message p:first-child {
+  color: #1F2937;
+  font-weight: 600;
+}
+
+.error-message .text-secondary {
+  font-size: 12px;
+  color: #9CA3AF;
+}
