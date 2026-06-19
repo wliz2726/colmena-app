@@ -13,25 +13,23 @@ import './InvoicesScreen.css';
 
 export function InvoicesScreen() {
   const navigate = useNavigate();
-  const { credentials } = useAuthStore();
+  const { token, whmcsUrl } = useAuthStore();
   const [filterStatus, setFilterStatus] = useState('Todos');
   const [selectedNav, setSelectedNav] = useState('invoices');
 
   const api = React.useMemo(() => {
-    if (!credentials) {
+    if (!token || !whmcsUrl) {
       navigate('/login');
       return null;
     }
     return initializeWhmcsApi({
-      whmcsUrl: credentials.whmcsUrl,
-      identifier: credentials.identifier,
-      secret: credentials.secret,
+      token: token,
+      baseUrl: whmcsUrl,
     });
-  }, [credentials, navigate]);
+  }, [token, whmcsUrl, navigate]);
 
   const invoicesQuery = useInvoices(api!, { limit: 200 });
 
-  // Filtrar invoices por estado
   const filteredInvoices = React.useMemo(() => {
     if (!invoicesQuery.data) return [];
     
@@ -46,7 +44,6 @@ export function InvoicesScreen() {
     );
   }, [invoicesQuery.data, filterStatus]);
 
-  // Calcular totales
   const totals = React.useMemo(() => {
     const totalAmount = filteredInvoices.reduce((sum, inv) => 
       sum + parseFloat(inv.total || '0'), 0
@@ -116,7 +113,6 @@ export function InvoicesScreen() {
 
       <div className="screen-content">
         <div className="screen-inner">
-          {/* RESUMEN */}
           <Card className="invoices-summary">
             <div className="summary-row">
               <div className="summary-item">
@@ -134,7 +130,6 @@ export function InvoicesScreen() {
             </div>
           </Card>
 
-          {/* FILTROS */}
           <div className="invoices-filters">
             {['Todos', 'Paid', 'Unpaid', 'Overdue'].map((status) => (
               <button
@@ -147,7 +142,6 @@ export function InvoicesScreen() {
             ))}
           </div>
 
-          {/* LISTA */}
           <div className="invoices-list">
             {filteredInvoices.length === 0 ? (
               <div className="empty-state">

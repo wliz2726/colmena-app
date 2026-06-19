@@ -15,26 +15,24 @@ import './CondominioDetailScreen.css';
 export function CondominioDetailScreen() {
   const navigate = useNavigate();
   const { clientid } = useParams<{ clientid: string }>();
-  const { credentials } = useAuthStore();
+  const { token, whmcsUrl } = useAuthStore();
   const [invoiceFilter, setInvoiceFilter] = useState('Todos');
   const [selectedNav, setSelectedNav] = useState('condominios');
 
   const api = React.useMemo(() => {
-    if (!credentials) {
+    if (!token || !whmcsUrl) {
       navigate('/login');
       return null;
     }
     return initializeWhmcsApi({
-      whmcsUrl: credentials.whmcsUrl,
-      identifier: credentials.identifier,
-      secret: credentials.secret,
+      token: token,
+      baseUrl: whmcsUrl,
     });
-  }, [credentials, navigate]);
+  }, [token, whmcsUrl, navigate]);
 
   const detailsQuery = useClientDetails(api!, clientid);
   const invoicesQuery = useClientInvoices(api!, clientid);
 
-  // Filtrar invoices
   const filteredInvoices = React.useMemo(() => {
     if (!invoicesQuery.data) return [];
     
@@ -138,7 +136,6 @@ export function CondominioDetailScreen() {
 
       <div className="screen-content">
         <div className="screen-inner">
-          {/* PERFIL */}
           <Card className="detail-profile">
             <div className="profile-header">
               <Avatar 
@@ -192,7 +189,6 @@ export function CondominioDetailScreen() {
             </div>
           </Card>
 
-          {/* INVOICES */}
           <h3 className="section-title">Facturas</h3>
 
           <div className="invoices-filters">
