@@ -88,6 +88,7 @@ async function callWhmcsApi(
     data.append('action', action);
     data.append('identifier', identifier);
     data.append('secret', secret);
+    data.append('accesskey', 'colmena_api_key_secure_2026_vercel_access');
     data.append('responsetype', 'json');
 
     // Agregar parámetros adicionales
