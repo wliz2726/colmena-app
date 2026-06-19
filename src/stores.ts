@@ -31,7 +31,7 @@ interface UseAuthStoreState {
   loading: boolean;
   savedCredentials: SavedCredentials | null;
 
-  setAuth: (token: string, whmcsUrl: string, saveCredentials?: SavedCredentials) => void;
+  setAuth: (token: string, whmcsUrl: string, saveCredentials?: SavedCredentials) => Promise<void>;
   logout: () => void;
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
@@ -57,31 +57,39 @@ export const useAuthStore = create<UseAuthStoreState>()(
     loading: false,
     savedCredentials: null,
 
-    setAuth: (token: string, whmcsUrl: string, saveCredentials?: SavedCredentials) =>
+    // ========================================================================
+    // SETAUTH - AHORA ASYNC
+    // ========================================================================
+    setAuth: async (token: string, whmcsUrl: string, saveCredentials?: SavedCredentials) => {
+      // Guardar credenciales encriptadas si se proporcionan
+      if (saveCredentials) {
+        try {
+          const encrypted = await encryptData(saveCredentials);
+          localStorage.setItem(STORAGE_KEYS.credentials, encrypted);
+        } catch (err) {
+          console.error('Error saving credentials:', err);
+        }
+      }
+
+      // Guardar token
+      try {
+        localStorage.setItem(STORAGE_KEYS.token, token);
+      } catch (err) {
+        console.error('Error saving token:', err);
+      }
+
+      // Actualizar estado
       set((state) => {
         state.isAuthenticated = true;
         state.token = token;
         state.whmcsUrl = whmcsUrl;
         state.error = null;
 
-        // Guardar credenciales encriptadas si se proporcionan
         if (saveCredentials) {
           state.savedCredentials = saveCredentials;
-          try {
-            const encrypted = encryptData(saveCredentials);
-            localStorage.setItem(STORAGE_KEYS.credentials, encrypted);
-          } catch (err) {
-            console.error('Error saving credentials:', err);
-          }
         }
-
-        // Guardar token
-        try {
-          localStorage.setItem(STORAGE_KEYS.token, token);
-        } catch (err) {
-          console.error('Error saving token:', err);
-        }
-      }),
+      });
+    },
 
     logout: () =>
       set((state) => {
@@ -141,7 +149,7 @@ export const useAuthStore = create<UseAuthStoreState>()(
         const encryptedCreds = localStorage.getItem(STORAGE_KEYS.credentials);
         if (encryptedCreds) {
           try {
-            const savedCreds = decryptData(encryptedCreds) as SavedCredentials;
+            const savedCreds = await decryptData(encryptedCreds) as SavedCredentials;
 
             set((state) => {
               state.savedCredentials = savedCreds;
