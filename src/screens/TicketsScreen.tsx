@@ -42,7 +42,7 @@ export function TicketsScreen() {
   // Traer tickets del departamento seleccionado (o todos si no hay seleccionado)
   const ticketsQuery = useTickets(api, {
     departmentid: selectedDepartment,
-    limit: 200,
+    limit: 50,
   });
 
   // Traer conteos

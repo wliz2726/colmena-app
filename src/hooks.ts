@@ -204,7 +204,7 @@ export function useDashboardStats(api: WhmcsApi): UseQueryResult<{ totalClients:
 }
 
 // ============================================================================
-// HOOKS PARA TICKETS (CORREGIDO - PARÁMETROS DENTRO DE 'params')
+// HOOKS PARA TICKETS (CON gcTime AGREGADO)
 // ============================================================================
 
 /**
@@ -231,6 +231,7 @@ export function useDepartments(api: AxiosInstance | null) {
     },
     enabled: !!api,
     staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 }
 
@@ -277,6 +278,7 @@ export function useTickets(
     },
     enabled: !!api,
     staleTime: 2 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
   });
 }
 
@@ -302,6 +304,7 @@ export function useTicketDetail(api: AxiosInstance | null, ticketid: string | un
     },
     enabled: !!api && !!ticketid,
     staleTime: 1 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
 
@@ -328,6 +331,7 @@ export function useTicketNotes(api: AxiosInstance | null, ticketid: string | und
     },
     enabled: !!api && !!ticketid,
     staleTime: 1 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 }
 
@@ -359,5 +363,6 @@ export function useTicketCounts(api: AxiosInstance | null, departmentid?: string
     },
     enabled: !!api,
     staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   });
 }
