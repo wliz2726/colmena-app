@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import axios, { AxiosInstance } from 'axios';
 import { useAuthStore } from '../stores';
 import { useTicketDetail, useTicketNotes } from '../hooks';
-import { initializeWhmcsApi } from '../whmcsApi';
 import { Header } from '../components/Header';
 import { Card } from '../components/Card';
 import { Badge } from '../components/Badge';
@@ -21,9 +21,13 @@ export function TicketDetailScreen() {
     if (!token) {
       return null;
     }
-    return initializeWhmcsApi({
-      token: token,
-    });
+    return axios.create({
+      baseURL: '/api/proxy',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    }) as AxiosInstance;
   }, [token]);
 
   const ticketQuery = useTicketDetail(api, ticketid);
