@@ -204,7 +204,7 @@ export function useDashboardStats(api: WhmcsApi): UseQueryResult<{ totalClients:
 }
 
 // ============================================================================
-// HOOKS PARA TICKETS (NUEVO - SIN DUPLICADOS)
+// HOOKS PARA TICKETS (CORREGIDO - PARÁMETROS DENTRO DE 'params')
 // ============================================================================
 
 /**
@@ -219,6 +219,7 @@ export function useDepartments(api: AxiosInstance | null) {
 
       const response = await api.post('/api/proxy', {
         action: 'GetDepartments',
+        params: {},
       });
 
       if (response.data.result === 'error') {
@@ -251,7 +252,6 @@ export function useTickets(
       if (!api) throw new Error('API no inicializado');
 
       const params: Record<string, any> = {
-        action: 'GetTickets',
         limitnum: options?.limit || 100,
       };
 
@@ -263,7 +263,10 @@ export function useTickets(
         params.status = options.status;
       }
 
-      const response = await api.post('/api/proxy', params);
+      const response = await api.post('/api/proxy', {
+        action: 'GetTickets',
+        params: params,
+      });
 
       if (response.data.result === 'error') {
         throw new Error(response.data.message || 'Error obteniendo tickets');
@@ -278,7 +281,7 @@ export function useTickets(
 }
 
 /**
- * Hook para obtener DETALLE de un ticket + notas
+ * Hook para obtener DETALLE de un ticket
  */
 export function useTicketDetail(api: AxiosInstance | null, ticketid: string | undefined) {
   return useQuery({
@@ -288,7 +291,7 @@ export function useTicketDetail(api: AxiosInstance | null, ticketid: string | un
 
       const response = await api.post('/api/proxy', {
         action: 'GetTicket',
-        ticketid,
+        params: { ticketid },
       });
 
       if (response.data.result === 'error') {
@@ -313,7 +316,7 @@ export function useTicketNotes(api: AxiosInstance | null, ticketid: string | und
 
       const response = await api.post('/api/proxy', {
         action: 'GetTicketNotes',
-        ticketid,
+        params: { ticketid },
       });
 
       if (response.data.result === 'error') {
@@ -337,15 +340,16 @@ export function useTicketCounts(api: AxiosInstance | null, departmentid?: string
     queryFn: async () => {
       if (!api) throw new Error('API no inicializado');
 
-      const params: Record<string, any> = {
-        action: 'GetTicketCounts',
-      };
+      const params: Record<string, any> = {};
 
       if (departmentid) {
         params.departmentid = departmentid;
       }
 
-      const response = await api.post('/api/proxy', params);
+      const response = await api.post('/api/proxy', {
+        action: 'GetTicketCounts',
+        params: params,
+      });
 
       if (response.data.result === 'error') {
         throw new Error(response.data.message || 'Error obteniendo conteos');
