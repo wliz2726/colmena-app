@@ -88,7 +88,6 @@ async function callWhmcsApi(
     data.append('action', action);
     data.append('identifier', identifier);
     data.append('secret', secret);
-    data.append('accesskey', 'IVXN*+5h1fw_E*nfl<EK=J-lH%3ecG[wC');
     data.append('responsetype', 'json');
 
     // Agregar parámetros adicionales
