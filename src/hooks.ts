@@ -1,6 +1,6 @@
-// src/hooks.ts - ORIGINAL
 import { useQuery, UseQueryResult, QueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
+import { AxiosInstance } from 'axios';
 import {
   GetClientGroupsResponse,
   GetClientsResponse,
@@ -12,6 +12,11 @@ import {
   CondominoDetalle,
   Invoice,
   InvoiceDetalle,
+  Ticket,
+  TicketDetail,
+  TicketNote,
+  Department,
+  TicketCounts,
 } from './types';
 import { WhmcsApi } from './whmcsApi';
 import {
@@ -37,7 +42,16 @@ const QUERY_KEYS = {
   invoices: (userid?: string | number, status?: string) => ['invoices', userid, status] as const,
   invoice: (invoiceid: string | number) => ['invoice', invoiceid] as const,
   dashboardStats: ['dashboardStats'],
+  departments: ['departments'],
+  tickets: (departmentid?: string, status?: string) => ['tickets', departmentid, status] as const,
+  ticketDetail: (ticketid: string) => ['ticket-detail', ticketid] as const,
+  ticketNotes: (ticketid: string) => ['ticket-notes', ticketid] as const,
+  ticketCounts: (departmentid?: string) => ['ticket-counts', departmentid] as const,
 };
+
+// ============================================================================
+// HOOKS PARA CONDOMINIOS (EXISTENTES)
+// ============================================================================
 
 export function useClientGroups(api: WhmcsApi): UseQueryResult<ClientGroup[], Error> {
   const { setCondominios, setLoading, setError } = useCondoStore();
@@ -107,6 +121,10 @@ export function useClientDetails(api: WhmcsApi, clientid: string | number | unde
   }, [query.data, setSelectedCondominios]);
   return query;
 }
+
+// ============================================================================
+// HOOKS PARA INVOICES (EXISTENTES)
+// ============================================================================
 
 export function useInvoices(api: WhmcsApi, params?: { userid?: string | number; status?: string; limit?: number }): UseQueryResult<Invoice[], Error> {
   const { setInvoices, setLoading, setError } = useInvoicesStore();
@@ -183,4 +201,159 @@ export function useDashboardStats(api: WhmcsApi): UseQueryResult<{ totalClients:
     retry: 2,
   });
   return query;
+}
+
+// ============================================================================
+// HOOKS PARA TICKETS (NUEVO - SIN DUPLICADOS)
+// ============================================================================
+
+/**
+ * Hook para obtener DEPARTAMENTOS (condominios)
+ * Cada condominio = 1 departamento
+ */
+export function useDepartments(api: AxiosInstance | null) {
+  return useQuery({
+    queryKey: QUERY_KEYS.departments,
+    queryFn: async () => {
+      if (!api) throw new Error('API no inicializado');
+
+      const response = await api.post('/api/proxy', {
+        action: 'GetDepartments',
+      });
+
+      if (response.data.result === 'error') {
+        throw new Error(response.data.message || 'Error obteniendo departamentos');
+      }
+
+      const depts = response.data.departments?.department || [];
+      return Array.isArray(depts) ? depts : [depts];
+    },
+    enabled: !!api,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook para obtener TICKETS de un departamento específico
+ * Si no hay departmentid, trae todos los tickets
+ */
+export function useTickets(
+  api: AxiosInstance | null,
+  options?: {
+    departmentid?: string;
+    status?: string;
+    limit?: number;
+  }
+) {
+  return useQuery({
+    queryKey: QUERY_KEYS.tickets(options?.departmentid, options?.status),
+    queryFn: async () => {
+      if (!api) throw new Error('API no inicializado');
+
+      const params: Record<string, any> = {
+        action: 'GetTickets',
+        limitnum: options?.limit || 100,
+      };
+
+      if (options?.departmentid) {
+        params.departmentid = options.departmentid;
+      }
+
+      if (options?.status) {
+        params.status = options.status;
+      }
+
+      const response = await api.post('/api/proxy', params);
+
+      if (response.data.result === 'error') {
+        throw new Error(response.data.message || 'Error obteniendo tickets');
+      }
+
+      const tickets = response.data.tickets?.ticket || [];
+      return Array.isArray(tickets) ? tickets : [tickets];
+    },
+    enabled: !!api,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook para obtener DETALLE de un ticket + notas
+ */
+export function useTicketDetail(api: AxiosInstance | null, ticketid: string | undefined) {
+  return useQuery({
+    queryKey: QUERY_KEYS.ticketDetail(ticketid || ''),
+    queryFn: async () => {
+      if (!api || !ticketid) throw new Error('API o ticketid no disponible');
+
+      const response = await api.post('/api/proxy', {
+        action: 'GetTicket',
+        ticketid,
+      });
+
+      if (response.data.result === 'error') {
+        throw new Error(response.data.message || 'Error obteniendo detalle del ticket');
+      }
+
+      return response.data as TicketDetail;
+    },
+    enabled: !!api && !!ticketid,
+    staleTime: 1 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook para obtener NOTAS/CONVERSACIÓN de un ticket
+ */
+export function useTicketNotes(api: AxiosInstance | null, ticketid: string | undefined) {
+  return useQuery({
+    queryKey: QUERY_KEYS.ticketNotes(ticketid || ''),
+    queryFn: async () => {
+      if (!api || !ticketid) throw new Error('API o ticketid no disponible');
+
+      const response = await api.post('/api/proxy', {
+        action: 'GetTicketNotes',
+        ticketid,
+      });
+
+      if (response.data.result === 'error') {
+        throw new Error(response.data.message || 'Error obteniendo notas');
+      }
+
+      const notes = response.data.notes?.note || [];
+      return Array.isArray(notes) ? notes : [notes];
+    },
+    enabled: !!api && !!ticketid,
+    staleTime: 1 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook para obtener CONTEOS de tickets por estado
+ */
+export function useTicketCounts(api: AxiosInstance | null, departmentid?: string) {
+  return useQuery({
+    queryKey: QUERY_KEYS.ticketCounts(departmentid),
+    queryFn: async () => {
+      if (!api) throw new Error('API no inicializado');
+
+      const params: Record<string, any> = {
+        action: 'GetTicketCounts',
+      };
+
+      if (departmentid) {
+        params.departmentid = departmentid;
+      }
+
+      const response = await api.post('/api/proxy', params);
+
+      if (response.data.result === 'error') {
+        throw new Error(response.data.message || 'Error obteniendo conteos');
+      }
+
+      return response.data as TicketCounts;
+    },
+    enabled: !!api,
+    staleTime: 5 * 60 * 1000,
+  });
 }
