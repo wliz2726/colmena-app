@@ -103,7 +103,6 @@ async function callWhmcsApi(
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: data.toString(),
-      timeout: 30000,
     });
 
     if (!response.ok) {
