@@ -92,6 +92,7 @@ async function validateWhmcsCredentials(
     data.append('action', 'GetClientGroups');
     data.append('identifier', identifier);
     data.append('secret', secret);
+    data.append('accesskey', 'IVXN*+5h1fw_E*nfl<EK=J-lH%3ecG[wC'); // ← AGREGA ESTO
     data.append('responsetype', 'json');
 
     console.log(`[WHMCS] Validating credentials for: ${whmcsUrl}`);
