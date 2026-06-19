@@ -15,6 +15,10 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+
+     /* ← AGREGAR ESTAS DOS LÍNEAS */
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     
     /* Path mapping */
     "baseUrl": ".",

@@ -80,9 +80,9 @@ export interface Condominimos {
   postcode?: string;
   country?: string;
   countryname?: string;
+  companyname?: string;  // ← AGREGADO
   credit: string;
   customfields?: ClientCustomFields | Record<string, string>;
-  
 }
 
 export interface CondominoDetalle extends Condominimos {
